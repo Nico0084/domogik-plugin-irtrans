@@ -1,0 +1,151 @@
+{
+    "products" : [{
+            "name" : "Remote ARC Family ",
+            "id" : "daikcode_ARC",
+            "documentation" : "http://www.velbus.eu/support/downloads/?id=363066",
+            "type" : "daikcode.remoteARC"
+        }
+    ],
+    "configuration" : [{
+            "default" : false,
+            "description" : "Automatically start the plugin at Domogik startup",
+            "sort" : "0",
+            "key" : "auto_startup",
+            "name" : "Start the plugin with Domogik",
+            "required" : true,
+            "type" : "boolean"
+        }
+    ],
+    "commands" : {
+        "send_code_ir" : {
+            "name" : "Send code IR",
+            "return_confirmation" : true,
+            "parameters" : [{
+                    "key" : "code",
+                    "data_type" : "DT_String",
+                    "conversion" : ""
+                }
+            ],
+            "xpl_command" : "send_code_ir"
+        }
+    },
+    "xpl_commands" : {
+        "send_code_ir" : {
+            "name" : "switch on-off",
+            "schema" : "irtrans.basic",
+            "xplstat_name" : "get_switch_state",
+            "parameters" : {
+                "static" : [{
+                        "key" : "command",
+                        "value" : "se,d"
+                    }
+                ],
+                "device" : []
+            }
+        }
+    },
+    "sensors" : {
+        "code_ir" : {
+            "name" : "Code IR received",
+            "data_type" : "DT_String",
+            "conversion" : "",
+            "history": {
+                    "store": true,
+                    "max": 0,
+                    "expire": 0,
+                    "round_value": 0
+                }
+        },
+        "msg_ack_send_cmd" : {
+            "name" : "code for ack command",
+            "data_type" : "DT_String",
+            "conversion" : "",
+            "history": {
+                    "store": false,
+                    "max": 0,
+                    "expire": 0,
+                    "round_value": 0
+                }
+        }
+    },
+    "xpl_stats" : {
+        "receive_code_ir" : {
+            "name" : "get fan speed",
+            "schema" : "sensor.basic",
+            "parameters" : {
+                "static" : [{
+                        "key" : "type",
+                        "value" : "code_ir"
+                    }
+				],
+                "device" : [],
+                "dynamic" : [{
+                        "key" : "code",
+                        "ignore_values" : "",
+                        "sensor" : "code_irtrans"
+                    }
+                ]
+            },
+         "ack_send" : {
+            "name" : "sended command acknowledge",
+            "schema" : "sensor.basic",
+            "parameters" : {
+                "static" : [{
+                        "key" : "type",
+                        "value" : "ack_cmd"
+                    }
+				],
+                "device" : [],
+                "dynamic" : [{
+                        "key" : "result",
+                        "ignore_values" : "",
+                        "sensor" : "msg_ack_send_cmd"
+                    }
+                ]
+            }
+        }
+    },
+    "device_types" : {
+        "irtrans.device" : {
+            "description" : "IRTrans device",
+            "id" : "irtrans.device",
+            "name" : "IRTrans Transmitter",
+            "commands" : ["send_code_ir"],
+            "sensors" : ["receive_code_ir","msg_ack_send_cmd"],
+            "parameters" : [{
+                    "key" : "device",
+					"xpl": true,
+                    "description" : "IRTrans unit identification",
+                    "type" : "string"
+                }, {
+                    "key" : "datatype",
+					"xpl": true,
+                    "description" : "Type of data to send",
+                    "type" : "choice",
+                    "choices" : {
+                        "1" : "IRTrans standard",
+                        "2" : "IR Raw",
+                        "3" : "IR Hexa"
+                    }
+                }, {
+                    "key" : "options",
+					"xpl": true,
+                    "description" : "Transmitter option(s) - for IRTrans set 'irclient' directory software.",
+                    "type" : "string"
+                }
+            ]
+        }
+    },
+    "identity" : {
+        "author" : "Nico0084",
+        "author_email" : "nico84dev at gmail.com",
+        "tags" : ["IR Transmitter"],
+        "dependencies" : [],
+        "description" : "Send/receive IR code from xPL to IRTrans modul",
+        "domogik_min_version" : "0.4.0",
+        "name" : "irtrans",
+         "type" : "plugin",
+        "version" : "0.1a0"
+    },
+    "json_version" : 2
+}
