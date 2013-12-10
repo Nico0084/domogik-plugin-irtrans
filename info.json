@@ -1,9 +1,9 @@
 {
     "products" : [{
-            "name" : "Remote ARC Family ",
-            "id" : "daikcode_ARC",
-            "documentation" : "http://www.velbus.eu/support/downloads/?id=363066",
-            "type" : "daikcode.remoteARC"
+            "name" : "IRTrans modul ",
+            "id" : "IRTrans",
+            "documentation" : "http://www.irtrans.de/en/",
+            "type" : "irtrans.device"
         }
     ],
     "configuration" : [{
@@ -37,7 +37,7 @@
             "parameters" : {
                 "static" : [{
                         "key" : "command",
-                        "value" : "se,d"
+                        "value" : "send"
                     }
                 ],
                 "device" : []
@@ -47,10 +47,12 @@
     "sensors" : {
         "code_ir" : {
             "name" : "Code IR received",
+            "incremental": false,
             "data_type" : "DT_String",
             "conversion" : "",
             "history": {
                     "store": true,
+                    "duplicate": false,
                     "max": 0,
                     "expire": 0,
                     "round_value": 0
@@ -58,10 +60,12 @@
         },
         "msg_ack_send_cmd" : {
             "name" : "code for ack command",
+            "incremental": false,
             "data_type" : "DT_String",
             "conversion" : "",
             "history": {
                     "store": false,
+                    "duplicate": false,
                     "max": 0,
                     "expire": 0,
                     "round_value": 0
@@ -71,7 +75,7 @@
     "xpl_stats" : {
         "receive_code_ir" : {
             "name" : "get fan speed",
-            "schema" : "sensor.basic",
+            "schema" : "ir.basic",
             "parameters" : {
                 "static" : [{
                         "key" : "type",
@@ -88,7 +92,7 @@
             },
          "ack_send" : {
             "name" : "sended command acknowledge",
-            "schema" : "sensor.basic",
+            "schema" : "ir.basic",
             "parameters" : {
                 "static" : [{
                         "key" : "type",
@@ -106,9 +110,9 @@
         }
     },
     "device_types" : {
-        "irtrans.device" : {
-            "description" : "IRTrans device",
-            "id" : "irtrans.device",
+        "irtrans_lan.device" : {
+            "description" : "IRTrans lan device",
+            "id" : "irtrans_lan.device",
             "name" : "IRTrans Transmitter",
             "commands" : ["send_code_ir"],
             "sensors" : ["receive_code_ir","msg_ack_send_cmd"],
@@ -118,20 +122,21 @@
                     "description" : "IRTrans unit identification",
                     "type" : "string"
                 }, {
-                    "key" : "datatype",
-					"xpl": true,
-                    "description" : "Type of data to send",
-                    "type" : "choice",
-                    "choices" : {
-                        "1" : "IRTrans standard",
-                        "2" : "IR Raw",
-                        "3" : "IR Hexa"
-                    }
-                }, {
-                    "key" : "options",
-					"xpl": true,
-                    "description" : "Transmitter option(s) - for IRTrans set 'irclient' directory software.",
-                    "type" : "string"
+				    "description" : "Path where IRTrans softwares are locate.",
+					"xpl": false,
+				    "key" : "server_path",
+				    "type" : "string"
+				}, {
+				    "description" : "IP of server can be localhost or on an other machine.",
+					"xpl": false,
+				    "key" : "ip_server",
+				    "name" : "IRTrans server IP",
+				    "type" : "ipv4"
+				}, {
+                    "key" : "irtrans_ip",
+					"xpl": false,
+                    "description" : "IP of IRTrans modul",
+                    "type" : "ipv4"
                 }
             ]
         }
