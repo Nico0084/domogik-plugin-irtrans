@@ -42,7 +42,7 @@ try:
     from domogik.mq.reqrep.client import MQSyncReq
     from domogik.mq.message import MQMessage
 
-    from domogik_packages.plugin_irtrans.lib.irtrans import IRTransServer,  IRTransClient,  getIRTransId
+    from domogik_packages.plugin_irtrans.lib.irtrans import IRTransServer,  ManagerClients,  getIRTransId
     import threading
     import traceback
 except ImportError as exc :
@@ -70,15 +70,10 @@ class IRTransManager(XplPlugin):
 
         # get the devices list
         self.devices = self.get_device_list(quit_if_no_device = False)
-#        print 'devices' , self.devices
         # get the config values
-        self.irtransClients = IRTransClients(self.sendXpl,  self.log,  self.get_stop())
+        self.managerClients = ManagerClients(self,  self.send_xplTrig)
         for a_device in self.devices :
             try :
-             #   self.log.debug("device : {0}".format(a_device))
-#                irtransmitter = self.get_parameter_for_feature(a_device, "xpl_stats", "get_switch_state", "irtransmitter")
-#                options = self.get_parameter_for_feature(a_device, "xpl_stats", "get_switch_state", "options")
-#                datatype = self.get_parameter_for_feature(a_device, "xpl_stats", "get_switch_state", "datatype")
                 if a_device['device_type_id'] != 'irtrans_lan.device' :
                     self.log.error(u"No irtrans_lan.device device type")
                     break
@@ -87,7 +82,7 @@ class IRTransManager(XplPlugin):
                     ip_server= self.get_parameter(a_device, "ip_server")
                     irtrans_ip= self.get_parameter(a_device, "irtrans_ip")
                     if server_path and ip_server and irtrans_ip :
-                        self.irtransClients.addDevice(a_device)
+                        self.managerClients.addClient(a_device)
                         self.log.info("Ready to work with device {0}".format(getIRTransId(a_device)))
                     else : self.log.info("Device parameters not configured, can't create IRTrans Client : {0}".format(getIRTransId(a_device)))
             except:
@@ -131,11 +126,11 @@ class IRTransManager(XplPlugin):
         self.log.debug("xpl-cmds listener received message:{0}".format(message))
         device_name = message.data['device']
         self.log.debug("device :" + device_name)
-        idsClient = self.irtransClients.getIdsClient(device_name)
+        idsClient = self.managerClients.getIdsClient(device_name)
         find = False
         if idsClient != [] :
             for id in idsClient :       
-                client = self.irtransClients.getClient(id)
+                client = self.managerClients.getClient(id)
                 if client :
                     self.log.debug("Handle xpl-cmds for IRTrans :{0}".format(message.data['device']))
                     find = True

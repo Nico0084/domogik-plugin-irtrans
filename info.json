@@ -1,9 +1,9 @@
 {
     "products" : [{
-            "name" : "IRTrans modul ",
-            "id" : "IRTrans",
+            "name" : "IRTrans Transmitter LAN",
+            "id" : "irtrans_lan",
             "documentation" : "http://www.irtrans.de/en/",
-            "type" : "irtrans.device"
+            "type" : "irtrans_lan.device"
         }
     ],
     "configuration" : [{
@@ -17,8 +17,23 @@
         }
     ],
     "commands" : {
-        "send_code_ir" : {
-            "name" : "Send code IR",
+        "send_standard" : {
+            "name" : "Send standard code",
+            "return_confirmation" : true,
+            "parameters" : [{
+                    "key" : "code",
+                    "data_type" : "DT_String",
+                    "conversion" : ""
+                }, {
+                    "key" : "timing",
+                    "data_type" : "DT_String",
+                    "conversion" : ""
+                }
+            ],
+            "xpl_command" : "send_standard_code"
+        },
+        "send_raw" : {
+            "name" : "Send raw code",
             "return_confirmation" : true,
             "parameters" : [{
                     "key" : "code",
@@ -26,18 +41,64 @@
                     "conversion" : ""
                 }
             ],
-            "xpl_command" : "send_code_ir"
+            "xpl_command" : "send_raw_code"
+        },
+        "send_hexa" : {
+            "name" : "Send hexa code",
+            "return_confirmation" : true,
+            "parameters" : [{
+                    "key" : "code",
+                    "data_type" : "DT_String",
+                    "conversion" : ""
+                }
+            ],
+            "xpl_command" : "send_hexa_code"
         }
     },
     "xpl_commands" : {
-        "send_code_ir" : {
-            "name" : "switch on-off",
+        "send_standard_code" : {
+            "name" : "send standard code",
             "schema" : "irtrans.basic",
-            "xplstat_name" : "get_switch_state",
+            "xplstat_name" : "ack_send",
             "parameters" : {
                 "static" : [{
                         "key" : "command",
                         "value" : "send"
+                    },{
+                        "key" : "datatype",
+                        "value" : "IRTrans standard"
+                    }
+                ],
+                "device" : []
+            }
+        },
+        "send_raw_code" : {
+            "name" : "send raw code",
+            "schema" : "irtrans.basic",
+            "xplstat_name" : "ack_send",
+            "parameters" : {
+                "static" : [{
+                        "key" : "command",
+                        "value" : "send"
+                    },{
+                        "key" : "datatype",
+                        "value" : "IR Raw"
+                    }
+                ],
+                "device" : []
+            }
+        },
+        "send_hexa_code" : {
+            "name" : "send hexa code",
+            "schema" : "irtrans.basic",
+            "xplstat_name" : "ack_send",
+            "parameters" : {
+                "static" : [{
+                        "key" : "command",
+                        "value" : "send"
+                    },{
+                        "key" : "datatype",
+                        "value" : "IR Hexa"
                     }
                 ],
                 "device" : []
@@ -58,7 +119,7 @@
                     "round_value": 0
                 }
         },
-        "msg_ack_send_cmd" : {
+        "ack_ir_cmd" : {
             "name" : "code for ack command",
             "incremental": false,
             "data_type" : "DT_String",
@@ -74,7 +135,7 @@
     },
     "xpl_stats" : {
         "receive_code_ir" : {
-            "name" : "get fan speed",
+            "name" : "receive_code_ir",
             "schema" : "ir.basic",
             "parameters" : {
                 "static" : [{
@@ -86,24 +147,25 @@
                 "dynamic" : [{
                         "key" : "code",
                         "ignore_values" : "",
-                        "sensor" : "code_irtrans"
+                        "sensor" : "code_ir"
                     }
                 ]
-            },
+            }
+        },
          "ack_send" : {
             "name" : "sended command acknowledge",
             "schema" : "ir.basic",
             "parameters" : {
                 "static" : [{
                         "key" : "type",
-                        "value" : "ack_cmd"
+                        "value" : "ack_ir_cmd"
                     }
 				],
                 "device" : [],
                 "dynamic" : [{
                         "key" : "result",
                         "ignore_values" : "",
-                        "sensor" : "msg_ack_send_cmd"
+                        "sensor" : "ack_ir_cmd"
                     }
                 ]
             }
@@ -114,8 +176,8 @@
             "description" : "IRTrans lan device",
             "id" : "irtrans_lan.device",
             "name" : "IRTrans Transmitter",
-            "commands" : ["send_code_ir"],
-            "sensors" : ["receive_code_ir","msg_ack_send_cmd"],
+            "commands" : ["send_standard", "send_raw", "send_hexa"],
+            "sensors" : ["code_ir","ack_ir_cmd"],
             "parameters" : [{
                     "key" : "device",
 					"xpl": true,
@@ -130,7 +192,6 @@
 				    "description" : "IP of server can be localhost or on an other machine.",
 					"xpl": false,
 				    "key" : "ip_server",
-				    "name" : "IRTrans server IP",
 				    "type" : "ipv4"
 				}, {
                     "key" : "irtrans_ip",
@@ -146,7 +207,7 @@
         "author_email" : "nico84dev at gmail.com",
         "tags" : ["IR Transmitter"],
         "dependencies" : [],
-        "description" : "Send/receive IR code from xPL to IRTrans modul",
+        "description" : "Send/receive IR code from xPL to IRTrans transmitter modul",
         "domogik_min_version" : "0.4.0",
         "name" : "irtrans",
          "type" : "plugin",

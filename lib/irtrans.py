@@ -2,16 +2,15 @@
 #-*- coding: utf-8 -*-
 import os
 import commands
+import pprint
 from zmq.eventloop.ioloop import IOLoop
 from domogik.mq.reqrep.client import MQSyncReq
 from domogik.mq.message import MQMessage
 from domogik.common.utils import get_sanitized_hostname
 
-from Daikin_Code import  *
-
 #  *********** Prérequis *********************
 # Installer le server IRTrans 
-# donner les droit d'ecriture dans le repertoire 'irTransClients' afin d'autoriser l'écriture du fichier de commande mise à jour pour chaque commande générée
+# donner les droit d'ecriture dans le repertoire 'remotes' afin d'autoriser l'écriture du fichier de commande mise à jour pour chaque commande générée
 
 ipirtrans = 'localhost'
 
@@ -61,7 +60,7 @@ class IRTransServer :
 class ManagerClients :
     """" Manager IRTrans Clients.
     """
-    def __init__ (self,  cb_send_xPL) :
+    def __init__ (self, xplPlugin,  cb_send_xPL) :
         """Initialise le manager IRTrans Clients"""
         self._xplPlugin = xplPlugin
         self._cb_send_xPL = cb_send_xPL
@@ -78,8 +77,7 @@ class ManagerClients :
         else:
             self.irTransClients[name] = IRTransClient(self,  device,  self._xplPlugin.log)
             self._xplPlugin.log.info(u"IRtrans Clients Manager : created new client {0}.".format(name))
-            print "Add Client :"
-            pprint.pprint(device)
+#            pprint.pprint(device)
             return True
         
     def removeClient(self, name):
@@ -146,7 +144,12 @@ class ManagerClients :
                     self.irTransClients[getIRTransId(a_device)] = self.irTransClients.pop(old_id)
                     self._xplPlugin.log.info(u"IRTrans Client {0} is rename {1}".format(old_id,  getIRTransId(a_device)))
                 client.updateDevice(a_device)
-                break        
+                break
+                
+    def sendXplAck(self,  data):
+        """Send an ack xpl message"""
+        self._cb_send_xPL(data)
+
 
 class IRTransClient :
     "Objet de liaison avec le server IRTrans (Linux) dialogue avec irclient en ASCII"
@@ -156,9 +159,9 @@ class IRTransClient :
         self._manager = manager
         self._device = device
         self._log = log
-        self.path = device["parameters"]["server_path"]
-        self.serverIP = device["parameters"]["ip_server"]
-        self.irTransIP = device["parameters"]["irtrans_ip"]
+        self.path = device["parameters"]["server_path"]["value"]
+        self.serverIP = device["parameters"]["ip_server"]["value"]
+        self.irTransIP = device["parameters"]["irtrans_ip"]["value"]
         self._remote = "client_{0}".format(device["id"])
         status, self.etat = commands.getstatusoutput('%s/irclient64 %s -remotelist' %(self.path,  self.serverIP)) 
         print "Etat : {0}\n Status : {1}".format(self.etat,  status)
@@ -168,48 +171,66 @@ class IRTransClient :
                 print li
                 if li.find('IRTrans ASCII Client') !=-1 : progOK = True
                 if li.find('Error connecting to host') !=-1 : servOK = False
+        if not servOK :
+            self._log.warning(u"Server connexion {0} impossible.".format(self.serverIP))
         if not progOK :
-            print 'Programme irclient introuvable : %s/irclient' %(self.path)
-        elif not servOK :
-            print 'connexion au server %s impossible.' %(self.serverIP)
+            self._log.warning(u"irclient software unreachable : {0}/irclient".format(self.path))
    #     print status,  self.etat
         
-    def updateDevice(self,  device) :
+    # On accède aux attributs uniquement depuis les property
+    getRemoteId = property(lambda self: getRemoteId(self._device))
+    getDomogikDevice = property(lambda self: self._getDomogikDevice())
+        
+    def updateDevice(self,  device):
         """Update device data."""
         self._device = device
         self.path = device["parameters"]["server_path"]
         self.serverIP = device["parameters"]["ip_server"]
         self.irTransIP = device["parameters"]["irtrans_ip"]
         self._remote = "client_{0}".format(device["id"])
+
+    def _getDomogikDevice(self):
+        """Return device Id for xPL domogik device"""
+        if self._device :
+            # try to find in xpl_commands
+            for a_cmd in self._device['xpl_commands']:
+                for a_param in self._device['xpl_commands'][a_cmd]['parameters']:
+                    if a_param['key'] == 'device' : return a_param['value']
+            # try to find in xpl_stats
+            for a_stat in self._device['xpl_stats']:
+                for a_param in self._device['xpl_stats'][a_stat]['parameters']['static']:
+                    if a_param['key'] == 'device' : return a_param['value']
+            return None
+        else : return None
         
     def sendCmd (self,  remote, cmd) :
         "Envoi la commande au server IRTrans"
-        status,output = commands.getstatusoutput('%s/irclient %s %s %s' %(self.path, self.serverIP, remote, cmd))
+        status, output = commands.getstatusoutput('%s/irclient %s %s %s' %(self.path, self.serverIP, remote, cmd))
         print "Command result, status : {0}\n output : {1}".format(status,  output)
         err=''
-        if not status :         # pas d"erreur
+        if status !=0 :         # Erreur
             for li in output.split('\n') :
                 if li.find('Error connecting to host') !=-1  or  li.find('IR Error:') !=-1 :  err = err + li
-        else : err='IR server Error sending cmd : %s' %('%s/irclient %s %s %s' %(self.path, self.serverIP, remote, cmd))
+        else : err='IR client sending cmd : %s' %('%s/irclient %s %s %s' %(self.path, self.serverIP, remote, cmd))
         return err
                 
-    def sendNewCmd(self, remote='',  tgs = Timings() , cmd=CodeIRDaikin()) : 
+    def sendNewCmd(self, remote='',  timing = "" , code="") : 
         "Envoi une nouvelle commande, Ecrit le fichier fait un reload et envoi la commande"
         if remote =='' : remote =self._remote
-        err=''
-        err = self.ecritFichRemote(remote,  tgs, cmd)
-        if not err :
-           err = self.reloadIRTransDB()
-           if not err : err = self.sendCmd(remote, cmd.nom)
-        return err
+        error = ''
+        error = self.ecritFichRemote(remote,  timing, code)
+        if not error :
+           error = self.reloadIRTransDB()
+           if not error : error = self.sendCmd(remote, "sample")
+        return error
         
-    def ecritFichRemote(self,  remote='',  tgs = Timings() , cmd=CodeIRDaikin()) :
+    def ecritFichRemote(self,  remote='',  timing = "" , code="") :
         "Ecrit un fichier type IRTrans comprenant la commande"
         try :
-            f = open('%s/irTransClients/%s.rem' %(self.path, remote),  "w")
+            f = open('%s/remotes/%s.rem' %(self.path, remote),  "w")
             f.write ("[REMOTE]\n  [NAME]" + remote + "\n\n[TIMING]\n")
-            f.write (tgs.encodeTimingsIRTrans() + '\n[COMMANDS]\n')
-            f.write (cmd.encodeCmdIRTrans() +'\n')
+            f.write (timing + '\n[COMMANDS]\n')
+            f.write ("  [sample]" + code +'\n')
             f.close()
             return 0
         except IOError, e :
@@ -219,17 +240,25 @@ class IRTransClient :
         "Recharge la base de donnée de irTransClients"
         status,output = commands.getstatusoutput('%s/irclient %s -reload' %(self.path,  self.serverIP)) 
         err=''
-        if not status :         # pas d"erreur
+        print ("reload DB status: {0} output : {1}".format(status,  output))
+        if status !=0 :         # erreur
             for li in output.split('\n') :
-                if li.find('Error connecting to host') !=-1  :  err = err + li
-        else : err='IR server Error sending cmd : %s/irclient %s -reload' %(self.path,  self.serverIP)
+                if li.find('Error connecting to host') !=-1  : pass # err = err + li
         return err
         
     def handle_xpl_cmd(self,  xPLmessage):
         """Handle a xpl-cmnd message from hub"""
         if xPLmessage['command'] == 'send' :
-            self._log.debug("IRTrans Client {0}, send code {1}".format(getIRTransId(self._device), xPLmessage['code']))
-            
+            if xPLmessage['datatype'] == "IRTrans standard" :
+                # timing : {'TIMINGS': [['440', '448'], ['440', '1288'], ['3448', '1720'], ['408', '29616']], 'N': 4, 'FREQ': 38, 'FL': 0, 'RP': 0, 'RS': 0, 'RC5': 0, 'RC6': 0, 'RC': 1, 'NOTOG': 0, 'SB': 0}
+                result = self.sendNewCmd(self._remote,  xPLmessage['timing'],  xPLmessage['code'])
+                self._log.debug("IRTrans Client {0}, send code {1}, result : {2}".format(getIRTransId(self._device), xPLmessage['code'],  result))
+                data = {'device': xPLmessage['device'],  'type': 'ack_ir_cmd', 'result': result}
+                self._manager.sendXplAck(data)
+            elif xPLmessage['datatype'] == "IR Raw" :
+                pass
+            elif xPLmessage['datatype'] == "IR Hexa" :
+                pass
         else : self._log.debug(u"IRTrans Client {0}, recieved unknows command {1}".format(getIRTransId(self._device), xPLmessage['command']))
  
     
