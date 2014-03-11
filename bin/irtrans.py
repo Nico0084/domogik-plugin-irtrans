@@ -42,7 +42,8 @@ try:
     from domogik.mq.reqrep.client import MQSyncReq
     from domogik.mq.message import MQMessage
 
-    from domogik_packages.plugin_irtrans.lib.irtrans import IRTransServer,  ManagerClients,  getIRTransId
+    from domogik_packages.plugin_irtrans.lib.irtrans import IRTransServer,  getIRTransId,  ManagerClients
+    
     import threading
     import traceback
 except ImportError as exc :
@@ -74,15 +75,11 @@ class IRTransManager(XplPlugin):
         self.managerClients = ManagerClients(self,  self.send_xplTrig)
         for a_device in self.devices :
             try :
-                if a_device['device_type_id'] != 'irtrans_lan.device' :
-                    self.log.error(u"No irtrans_lan.device device type")
+                if (a_device['device_type_id'] != 'irtrans_lan.device') and (a_device['device_type_id'] != 'irwsserver.device') :
+                    self.log.error(u"No a device type reconized : {0}".format(a_device['device_type_id']))
                     break
                 else :
-                    server_path= self.get_parameter(a_device, "server_path")
-                    ip_server= self.get_parameter(a_device, "ip_server")
-                    irtrans_ip= self.get_parameter(a_device, "irtrans_ip")
-                    if server_path and ip_server and irtrans_ip :
-                        self.managerClients.addClient(a_device)
+                    if self.managerClients.addClient(a_device) :
                         self.log.info("Ready to work with device {0}".format(getIRTransId(a_device)))
                     else : self.log.info("Device parameters not configured, can't create IRTrans Client : {0}".format(getIRTransId(a_device)))
             except:

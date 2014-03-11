@@ -4,20 +4,16 @@
             "id" : "irtrans_lan",
             "documentation" : "http://www.irtrans.de/en/",
             "type" : "irtrans_lan.device"
+        }, {
+            "name" : "IR WebSocket server Transmitter",
+            "id" : "irwsserver",
+            "documentation" : "http://github/",
+            "type" : "irwsserver.device"
         }
     ],
-    "configuration" : [{
-            "default" : false,
-            "description" : "Automatically start the plugin at Domogik startup",
-            "sort" : "0",
-            "key" : "auto_startup",
-            "name" : "Start the plugin with Domogik",
-            "required" : true,
-            "type" : "boolean"
-        }
-    ],
+    "configuration" : [],
     "commands" : {
-        "send_standard" : {
+        "send_bintimings" : {
             "name" : "Send standard code",
             "return_confirmation" : true,
             "parameters" : [{
@@ -30,7 +26,7 @@
                     "conversion" : ""
                 }
             ],
-            "xpl_command" : "send_standard_code"
+            "xpl_command" : "send_bintimings_code"
         },
         "send_raw" : {
             "name" : "Send raw code",
@@ -56,7 +52,7 @@
         }
     },
     "xpl_commands" : {
-        "send_standard_code" : {
+        "send_bintimings_code" : {
             "name" : "send standard code",
             "schema" : "irtrans.basic",
             "xplstat_name" : "ack_send",
@@ -66,7 +62,7 @@
                         "value" : "send"
                     },{
                         "key" : "datatype",
-                        "value" : "IRTrans standard"
+                        "value" : "BinTimings"
                     }
                 ],
                 "device" : []
@@ -82,7 +78,7 @@
                         "value" : "send"
                     },{
                         "key" : "datatype",
-                        "value" : "IR Raw"
+                        "value" : "RAW"
                     }
                 ],
                 "device" : []
@@ -98,7 +94,7 @@
                         "value" : "send"
                     },{
                         "key" : "datatype",
-                        "value" : "IR Hexa"
+                        "value" : "HEX"
                     }
                 ],
                 "device" : []
@@ -176,12 +172,17 @@
             "description" : "IRTrans lan device",
             "id" : "irtrans_lan.device",
             "name" : "IRTrans Transmitter",
-            "commands" : ["send_standard", "send_raw", "send_hexa"],
+            "commands" : ["send_bintimings", "send_raw", "send_hexa"],
             "sensors" : ["code_ir","ack_ir_cmd"],
             "parameters" : [{
                     "key" : "device",
 					"xpl": true,
                     "description" : "IRTrans unit identification",
+                    "type" : "string"
+                }, {
+                    "key" : "ir_coder",
+					"xpl": false,
+                    "description" : "IR Encoder type name (DAIKIN, RC5,..) ",
                     "type" : "string"
                 }, {
 				    "description" : "Path where IRTrans softwares are locate.",
@@ -198,6 +199,50 @@
 					"xpl": false,
                     "description" : "IP of IRTrans modul",
                     "type" : "ipv4"
+                }
+            ]
+        },
+        "irwsserver.device" : {
+            "description" : "IR WebSocket server device",
+            "id" : "irwsserver.device",
+            "name" : "IR WS Server Transmitter",
+            "commands" : ["send_bintimings", "send_raw", "send_hexa"],
+            "sensors" : ["code_ir","ack_ir_cmd"],
+            "parameters" : [{
+                    "key" : "device",
+					"xpl": true,
+                    "description" : "IR transceiver unit identification",
+                    "type" : "string"
+                }, {
+                    "key" : "ir_coder",
+					"xpl": false,
+                    "description" : "IR Encode type name (DAIKIN, RC5)",
+                    "type" : "string"
+                }, {
+				    "description" : "IP of webSocket server.",
+					"xpl": false,
+				    "key" : "ip_server",
+				    "type" : "ipv4"
+				}, {
+                    "key" : "port_server",
+					"xpl": false,
+                    "description" : "Port of webSocket server.",
+                    "type" : "integer"
+                }, {
+                    "key" : "ssl_activate",
+					"xpl": false,
+                    "description" : "ssl activation",
+                    "type" : "boolean"
+                }, {
+                    "key" : "ssl_certificate",
+					"xpl": false,
+                    "description" : "ssl certificate",
+                    "type" : "string"
+                }, {
+                    "key" : "ssl_key",
+					"xpl": false,
+                    "description" : "ssl key",
+                    "type" : "string"
                 }
             ]
         }
