@@ -38,7 +38,8 @@ def create_device():
     device_id = td2.create_device("plugin-irtrans.{0}".format(get_sanitized_hostname()), "test_IRTrans_WS", "irwsserver.device")
     print "Device irwsserver created"
     td2.configure_global_parameters({"device" : DEVICE2_NAME, "ir_coder" : ENCODER, "ip_server": DEVICE2_IP_SERVER, "port_server" : DEVICE2_PORT_SERVER,
-                                                  "ssl_activate": DEVICE2_SSL, "ssl_certificate": DEVICE2_CERTIFICATE,  "ssl_key": DEVICE2_KEY})
+                                                  "ssl_activate": DEVICE2_SSL, "ssl_certificate": DEVICE2_CERTIFICATE,  "ssl_key": DEVICE2_KEY, 
+                                                  "ir_repeat": 3, "ir_tolerance": 150,  "ir_large_tolerance": 300,  "ir_max_out": 10})
     print "Device irwsserver configured" 
     
 if __name__ == "__main__":

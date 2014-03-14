@@ -243,6 +243,26 @@
 					"xpl": false,
                     "description" : "ssl key",
                     "type" : "string"
+                }, {
+                    "key" : "ir_repeat",
+					"xpl": false,
+                    "description" : "number of repeat if sendind infrared code fail (default : 3)",
+                    "type" : "integer"
+                }, {
+                    "key" : "ir_tolerance",
+					"xpl": false,
+                    "description" : "Tolerence in us for pulse/pause pairs for decoded infrared code (default : 150 us)",
+                    "type" : "integer"
+                }, {
+                    "key" : "ir_large_tolerance",
+					"xpl": false,
+                    "description" : "Large tolerence in us for decoded infrared code, according to ir_max_out (default : 300 us)",
+                    "type" : "integer"
+                }, {
+                    "key" : "ir_max_out",
+					"xpl": false,
+                    "description" : "Number of pulse/pair in ir_large_tolerance fir decoded infrared code (default : 10)",
+                    "type" : "integer"
                 }
             ]
         }

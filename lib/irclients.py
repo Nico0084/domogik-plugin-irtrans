@@ -88,6 +88,24 @@ def checkIfConfigured(deviceType,  device):
         else : return False
     return False
 
+class TimerClient:
+    def __init__(self, tempo, callback, args= [], kwargs={}):
+        self._callback = callback
+        self._args = args
+        self._kwargs = kwargs
+        self._tempo = tempo
+
+    def _run(self):
+        self._timer = threading.Timer(self._tempo, self._run)
+        self._timer.start()
+        self._callback(*self._args, **self._kwargs)
+        
+    def start(self):
+        self._timer = threading.Timer(self._tempo, self._run)
+        self._timer.start()
+
+    def stop(self):
+        self._timer.cancel()
 
 class IRClientBase :
     "Objet client de base pour la liaison avec le tramsmetteur infrarouge."
@@ -246,6 +264,7 @@ class IRWSClient(IRClientBase ):
             self.send(json.dumps(confirmation))
 
         def closed(self, code, reason=None):
+            self._parent.webSockect = None
             print "Closed down", code, reason
 
         def received_message(self, message):
@@ -257,30 +276,61 @@ class IRWSClient(IRClientBase ):
             except TypeError as e :
                 print '   Error parsing websocket msg :',  e
             else :
-                print  msg
                 if msg['header']['type'] == 'confirm-connect' :
                     self._parent.idws = msg['header']['idws']
-#                    self._parent.ip = msg['header']['ip']
+                    self._parent.requestLasMemIRcode()
+                    self._parent.requestTolerancesEncoder() # TODO: à changer par sendTolerancesEncoder une fois les paramettres récupérés de device
                     if self._parent._msgToSend  : self.send(json.dumps(self._parent._msgToSend))
                 elif msg['header']['type'] == 'ack' and msg['header']['idws'] == self._parent.idws :
-                    if self._parent._msgToSend  :
+                    if msg['request'] == 'server-hbeat':
+                        pass
+                    elif msg['request'] == 'getMemIRCode':
+                        self._parent.setMemIRCode(msg['data'])
+                    elif msg['request'] == 'setTolerances':
+                        if msg['error']  != '': self._parent._log.warning(msg['error'] + msg['data']['error'] )
+                    elif msg['request'] == 'getTolerances':         
+                        if msg['error']  == '':
+                            self._parent.setTolerancesEncoder(msg['data']['tolerances'])
+                    elif self._parent._msgToSend and (msg['request'] == 'sendIRCode') :
                         if msg['header']['idmsg'] == self._parent._msgToSend['header']['idmsg'] :
                             data = {'device': self._parent.domogikDevice,  'type': 'ack_ir_cmd', 'result': msg['error'] if msg['error'] else "ok"}
-                            self._parent._manager.sendXplAck(data)
-                            self._parent._msgToSend = None
+                            if msg['error'] != '':
+                               if not self._parent.nextTrySendCode() :
+                                    self._parent._manager.sendXplAck(data)
+                                    self._parent._msgToSend = None
+                            else :        
+                                self._parent.setMemIRCode(msg['data'])
+                                self._parent._manager.sendXplAck(data)
+                                self._parent._msgToSend = None
                         else : self._parent._log.info(u"Ack msg received but not register for {0}".format(self._parent.remoteId))
                 elif msg['header']['type'] == 'pub' and msg['header']['idws'] == self._parent.idws :
-                    data = {'device': self._parent.domogikDevice,  'type': 'code_ir', 'code': msg['code']}
-                    self._parent._manager.sendXplTrig(data)
-
+                    if msg['type'] == 'codereceived' :
+                        self._parent.setMemIRCode(msg['data'])
+                        if msg['data']['encoder'] == '' : msg['data']['encoder']  = 'unknown'
+                        data = {'device': self._parent.domogikDevice,  'type': 'code_ir', 'code': msg['data']['code'],  'encoder' : msg['data']['encoder']}
+                        self._parent._manager.sendXplTrig(data)
+                    else :
+                        self._parent._log.debug("Receive unknown published type : {0}".format(msg['type']))
+                    
 
     def __init__(self, manager,  device, log) :
         '''Init IRClientBase and WebSocketClient'''
 
         IRClientBase.__init__(self,  manager,  device, log)
         self.updateDevice(device)
+        self._numTrySend = 1
         self._msgToSend = None
+        self.webSockect = None
+        self.IRCodeValue = None
         self.createWSClient()
+        self._serverHbeat = TimerClient(30,  self.sendHbeat)
+        time.sleep(1)
+        self._serverHbeat.start()
+        
+    def __del__(self):
+        '''Close hbeat timmer and web socket client'''
+        if self.webSockect : self.webSockect.close()
+        self._serverHbeat.stop()
 
 # IRClientBase methodes overwrite
     def updateDevice(self,  device):
@@ -289,13 +339,16 @@ class IRWSClient(IRClientBase ):
         self._serverIP = device["parameters"]["ip_server"]["value"]
         self._serverPort = device["parameters"]["port_server"]["value"]
         self.irCoder = device["parameters"]["ir_coder"]["value"]
+        self.repeatCode = device["parameters"]["ir_repeat"]["value"] 
+        self.tolerances = {"tolerance": device["parameters"]["ir_tolerance"]["value"] ,  
+                                  "large": device["parameters"]["ir_large_tolerance"]["value"] , 
+                                  "maxout": device["parameters"]["ir_max_out"]["value"]}  
         self._remote = "client_{0}".format(device["id"])
-        # TODO: Redirect server address
 
     def sendCmd (self,  dataType, cmd) :
         "Envoi la commande au server WebSocket"
-        self._msgToSend = {"header" : {"type": "req-ack",  'idws': self.idws,'idmsg': randint(1, 1000000), 'ip' : self.ip,'timestamp' : time.time()}}
-        self._msgToSend.update({'request': 'sendIRCode', 'Encoder': self.irCoder, 'DataType': 'BinTimings', 'IRCode': cmd})
+        self._msgToSend = self.getMsgHeader()
+        self._msgToSend.update({'request': 'sendIRCode', 'encoder': self.irCoder, 'datatype': dataType, 'code': cmd})
         if self.webSockect : 
             self.webSockect.send(json.dumps(self._msgToSend))
         else : self.createWSClient()
@@ -307,13 +360,16 @@ class IRWSClient(IRClientBase ):
             if xPLmessage['datatype'] == DataTypes[0] : # "RAW"
                 pass
             elif xPLmessage['datatype'] == DataTypes[1] :  #"BinTimings" 
-                self.sendCmd(self._remote,  xPLmessage['code'])
+                self.sendCmd(xPLmessage['datatype'],  xPLmessage['code'])
                 self._log.debug("WS Client {0}, send code {1}".format(getIRTransId(self._device), xPLmessage['code']))
             elif xPLmessage['datatype'] == DataTypes[0] : #"HEX" :
                 pass
         else : self._log.debug(u"WS Client {0}, recieved unknows command {1}".format(getIRTransId(self._device), xPLmessage['command']))
 
  # New methods
+ 
+    def getMsgHeader(self):
+        return {"header" : {"type": "req-ack",  'idws': self.idws,'idmsg': randint(1, 1000000), 'ip' : self.ip,'timestamp' : time.time()}}
 
     def createWSClient(self):
         if self._device :
@@ -336,5 +392,72 @@ class IRWSClient(IRClientBase ):
                 th.start()
                 self._log.debug(u"WSClient for <{0}>, running forever".format(self.domogikDevice))
             except Exception, e:
+                self.webSockect = None
                 self._log.warning(u"WebSocket Client for <{0}> to {1}, create error : {2}".format(self.domogikDevice,  url, e))
-        else : self._log.debug(u"No device attached, WS Client creation unavailable.")
+        else : 
+            self.webSockect = None
+            self._log.debug(u"No device attached, WS Client creation unavailable.")
+    
+    def nextTrySendCode(self):
+        if self._numTrySend < self.repeatCode :
+            print ("**************  Next TRY **********************")
+            self._numTrySend +=1
+            self.sendCmd(self._msgToSend['datatype'],  self._msgToSend['code'])
+            return True
+        else :
+            self._numTrySend = 1
+            return False
+            
+    def setMemIRCode(self,  data):
+        '''Memorize last IR code known.'''
+        if data['error'] == '':
+            if not self.IRCodeValue :
+                self._log.info("IRCode Value must be created.")
+                self.IRCodeValue = {'code': data['code'],  'encoder' : data['encoder']}
+            elif self.IRCodeValue['code'] != data['code'] :
+                self._log.info("IRCode Value must be updated.")
+                self.IRCodeValue = {'code': data['code'],  'encoder' : data['encoder']}
+            else : 
+                self._log.debug("IRCode Value is up to date.")
+        else :
+            self._log.info("Can't check IRCode : {0}".format(data['error']))
+            
+    def setTolerancesEncoder(self,  tolerances):
+        self.tolerances = tolerances
+        
+    def sendTolerancesEncoder(self):
+        '''Set Tolerances parameters for encoder'''
+        msgToSend = self.getMsgHeader()
+        msgToSend.update({'request': 'setTolerances', 'encoder': self.irCoder,  'tolerances' : self.tolerances})
+        if self.webSockect : 
+            self.webSockect.send(json.dumps(msgToSend))
+
+    def requestTolerancesEncoder(self):
+        '''Request by sending message to WSServer tolerances parameters.'''
+        msgToSend = self.getMsgHeader()
+        msgToSend.update({'request': 'getTolerances', 'encoder': self.irCoder,})
+        if self.webSockect : 
+            self.webSockect.send(json.dumps(msgToSend))
+
+    def requestLasMemIRcode(self):
+        '''Request by sending message to WSServer code in memory.'''
+        msgToSend = self.getMsgHeader()
+        msgToSend.update({'request': 'getMemIRCode'})
+        if self.webSockect : 
+            self.webSockect.send(json.dumps(msgToSend))
+
+    def sendHbeat(self):
+        '''Envoi un message Hbeat pour  vérifier la connection au WebSockect server.'''
+        hbeatMsg = self.getMsgHeader()
+        hbeatMsg.update({'request': 'server-hbeat'})
+        if self.webSockect : 
+            self.webSockect.send(json.dumps(hbeatMsg))
+        else : self.createWSClient()
+        
+    def startHbeat(self):
+        self._serverHbeat.start()
+    
+    def stopHbeat(self):
+        self._serverHbeat.stop()
+    
+    
