@@ -285,7 +285,12 @@ class IRWSClient(IRClientBase ):
                     if msg['request'] == 'server-hbeat':
                         pass
                     elif msg['request'] == 'getMemIRCode':
-                        self._parent.setMemIRCode(msg['data'])
+                        if msg['data']['encoder'] == self._parent.irCoder:
+                            if self._parent.setMemIRCode(msg['data']) :
+                                data = {'device': self._parent.domogikDevice,  'type': 'code_ir', 'code': msg['data']['code'],  'encoder' : msg['data']['encoder']}
+                                self._parent._manager.sendXplTrig(data)
+                        else : 
+                            self._parent._log.debug("Receive ir code with bad encoder : {0}".format(msg['data']['encoder'] if msg['data']['encoder'] !='' else 'unknown'))
                     elif msg['request'] == 'setTolerances':
                         if msg['error']  != '': self._parent._log.warning(msg['error'] + msg['data']['error'] )
                     elif msg['request'] == 'getTolerances':         
@@ -305,10 +310,12 @@ class IRWSClient(IRClientBase ):
                         else : self._parent._log.info(u"Ack msg received but not register for {0}".format(self._parent.remoteId))
                 elif msg['header']['type'] == 'pub' and msg['header']['idws'] == self._parent.idws :
                     if msg['type'] == 'codereceived' :
-                        self._parent.setMemIRCode(msg['data'])
-                        if msg['data']['encoder'] == '' : msg['data']['encoder']  = 'unknown'
-                        data = {'device': self._parent.domogikDevice,  'type': 'code_ir', 'code': msg['data']['code'],  'encoder' : msg['data']['encoder']}
-                        self._parent._manager.sendXplTrig(data)
+                        if msg['data']['encoder'] == self._parent.irCoder:
+                            self._parent.setMemIRCode(msg['data'])
+                            data = {'device': self._parent.domogikDevice,  'type': 'code_ir', 'code': msg['data']['code'],  'encoder' : msg['data']['encoder']}
+                            self._parent._manager.sendXplTrig(data)
+                        else : 
+                            self._parent._log.debug("Receive ir code with bad encoder : {0}".format(msg['data']['encoder'] if msg['data']['encoder'] !='' else 'unknown'))
                     else :
                         self._parent._log.debug("Receive unknown published type : {0}".format(msg['type']))
                     
@@ -339,10 +346,10 @@ class IRWSClient(IRClientBase ):
         self._serverIP = device["parameters"]["ip_server"]["value"]
         self._serverPort = device["parameters"]["port_server"]["value"]
         self.irCoder = device["parameters"]["ir_coder"]["value"]
-        self.repeatCode = device["parameters"]["ir_repeat"]["value"] 
-        self.tolerances = {"tolerance": device["parameters"]["ir_tolerance"]["value"] ,  
-                                  "large": device["parameters"]["ir_large_tolerance"]["value"] , 
-                                  "maxout": device["parameters"]["ir_max_out"]["value"]}  
+        self.repeatCode = int(device["parameters"]["ir_repeat"]["value"])
+        self.tolerances = {"tolerance": int(device["parameters"]["ir_tolerance"]["value"]) ,  
+                                  "large": int(device["parameters"]["ir_large_tolerance"]["value"]), 
+                                  "maxout": int(device["parameters"]["ir_max_out"]["value"])}  
         self._remote = "client_{0}".format(device["id"])
 
     def sendCmd (self,  dataType, cmd) :
@@ -401,6 +408,7 @@ class IRWSClient(IRClientBase ):
     def nextTrySendCode(self):
         if self._numTrySend < self.repeatCode :
             print ("**************  Next TRY **********************")
+            print("repeat :{0}, nb :{1}".format(self.repeatCode, self._numTrySend))
             self._numTrySend +=1
             self.sendCmd(self._msgToSend['datatype'],  self._msgToSend['code'])
             return True
@@ -409,18 +417,21 @@ class IRWSClient(IRClientBase ):
             return False
             
     def setMemIRCode(self,  data):
-        '''Memorize last IR code known.'''
+        '''Memorize last IR code known. return Ture is updated else False'''
         if data['error'] == '':
             if not self.IRCodeValue :
                 self._log.info("IRCode Value must be created.")
                 self.IRCodeValue = {'code': data['code'],  'encoder' : data['encoder']}
+                return True
             elif self.IRCodeValue['code'] != data['code'] :
                 self._log.info("IRCode Value must be updated.")
                 self.IRCodeValue = {'code': data['code'],  'encoder' : data['encoder']}
+                return True
             else : 
                 self._log.debug("IRCode Value is up to date.")
         else :
             self._log.info("Can't check IRCode : {0}".format(data['error']))
+        return False
             
     def setTolerancesEncoder(self,  tolerances):
         self.tolerances = tolerances
