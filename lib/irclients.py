@@ -268,7 +268,6 @@ class IRWSClient(IRClientBase ):
             print "Closed down", code, reason
 
         def received_message(self, message):
-            global FLAG_Repeat
             print "Message received :"
             print message
             try :
@@ -280,6 +279,7 @@ class IRWSClient(IRClientBase ):
                     self._parent.idws = msg['header']['idws']
                     self._parent.requestLasMemIRcode()
                     self._parent.requestTolerancesEncoder() # TODO: à changer par sendTolerancesEncoder une fois les paramettres récupérés de device
+                    self._parent.requestHardState(True)
                     if self._parent._msgToSend  : self.send(json.dumps(self._parent._msgToSend))
                 elif msg['header']['type'] == 'ack' and msg['header']['idws'] == self._parent.idws :
                     if msg['request'] == 'server-hbeat':
@@ -296,6 +296,12 @@ class IRWSClient(IRClientBase ):
                     elif msg['request'] == 'getTolerances':         
                         if msg['error']  == '':
                             self._parent.setTolerancesEncoder(msg['data']['tolerances'])
+                    elif msg['request'] == 'getState':         
+                        if msg['error']  == '':
+                            self._parent.setHardState(msg['data']['state'])
+                        else :
+                            self._hardState = None
+                            self._parent._log.info("Hard State : {0}, {1}".format( msg['error'],  msg['data']['error']))
                     elif self._parent._msgToSend and (msg['request'] == 'sendIRCode') :
                         if msg['header']['idmsg'] == self._parent._msgToSend['header']['idmsg'] :
                             data = {'device': self._parent.domogikDevice,  'type': 'ack_ir_cmd', 'result': msg['error'] if msg['error'] else "ok"}
@@ -316,6 +322,8 @@ class IRWSClient(IRClientBase ):
                             self._parent._manager.sendXplTrig(data)
                         else : 
                             self._parent._log.debug("Receive ir code with bad encoder : {0}".format(msg['data']['encoder'] if msg['data']['encoder'] !='' else 'unknown'))
+                    if msg['type'] == 'hardState' :
+                            self._parent.setHardState(msg['data']['state'])                        
                     else :
                         self._parent._log.debug("Receive unknown published type : {0}".format(msg['type']))
                     
@@ -329,6 +337,7 @@ class IRWSClient(IRClientBase ):
         self._msgToSend = None
         self.webSockect = None
         self.IRCodeValue = None
+        self._hardState = None
         self.createWSClient()
         self._serverHbeat = TimerClient(30,  self.sendHbeat)
         time.sleep(1)
@@ -417,7 +426,7 @@ class IRWSClient(IRClientBase ):
             return False
             
     def setMemIRCode(self,  data):
-        '''Memorize last IR code known. return Ture is updated else False'''
+        '''Memorize last IR code known. return True is updated else False'''
         if data['error'] == '':
             if not self.IRCodeValue :
                 self._log.info("IRCode Value must be created.")
@@ -436,6 +445,13 @@ class IRWSClient(IRClientBase ):
     def setTolerancesEncoder(self,  tolerances):
         self.tolerances = tolerances
         
+    def setHardState(self,  state):
+        '''Memorize flag hardState and send xpl-trig if necessary.'''
+        if  self._hardState != state :
+            self._hardState = state
+            data = {'device': self.domogikDevice,  'type': 'power',  'state': "On" if self._hardState == 1 else "Off"}
+            self._manager.sendXplTrig(data)
+
     def sendTolerancesEncoder(self):
         '''Set Tolerances parameters for encoder'''
         msgToSend = self.getMsgHeader()
@@ -456,6 +472,14 @@ class IRWSClient(IRClientBase ):
         msgToSend.update({'request': 'getMemIRCode'})
         if self.webSockect : 
             self.webSockect.send(json.dumps(msgToSend))
+            
+    def requestHardState(self,  getCapability = False):
+        '''Request hard state by sending message to WSserver if getCapability force to get hard State capabity.'''
+        if getCapability or (self._hardState != None):
+            msgToSend = self.getMsgHeader()
+            msgToSend.update({'request': 'getState'})
+            if self.webSockect : 
+                self.webSockect.send(json.dumps(msgToSend))
 
     def sendHbeat(self):
         '''Envoi un message Hbeat pour  vérifier la connection au WebSockect server.'''
