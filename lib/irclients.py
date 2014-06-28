@@ -315,14 +315,14 @@ class IRWSClient(IRClientBase ):
                                 self._parent._msgToSend = None
                         else : self._parent._log.info(u"Ack msg received but not register for {0}".format(self._parent.remoteId))
                 elif msg['header']['type'] == 'pub' and msg['header']['idws'] == self._parent.idws :
-                    if msg['type'] == 'codereceived' :
+                    if msg['type'] == 'codereceived' : 
                         if msg['data']['encoder'] == self._parent.irCoder:
                             self._parent.setMemIRCode(msg['data'])
                             data = {'device': self._parent.domogikDevice,  'type': 'code_ir', 'code': msg['data']['code'],  'encoder' : msg['data']['encoder']}
                             self._parent._manager.sendXplTrig(data)
                         else : 
                             self._parent._log.debug("Receive ir code with bad encoder : {0}".format(msg['data']['encoder'] if msg['data']['encoder'] !='' else 'unknown'))
-                    if msg['type'] == 'hardState' :
+                    elif msg['type'] == 'hardState' :
                             self._parent.setHardState(msg['data']['state'])                        
                     else :
                         self._parent._log.debug("Receive unknown published type : {0}".format(msg['type']))

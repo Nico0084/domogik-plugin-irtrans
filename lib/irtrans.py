@@ -145,7 +145,7 @@ class ManagerClients :
         msg.add_data('name', self._xplPlugin.get_plugin_name())
         msg.add_data('host', get_sanitized_hostname())
         devices = cli.request('dbmgr', msg.get(), timeout=10).get()
-        for a_devices in devices:
+        for a_device in devices:
             if a_device['device_type_id'] == client._device['device_type_id']  and a_device['id'] == client._device['id'] :
                 if a_device['name'] != client.device['name'] : # rename and change key client id
                     old_id = getIRTransId(client._device)
