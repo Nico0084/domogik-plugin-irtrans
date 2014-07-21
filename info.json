@@ -3,12 +3,12 @@
             "name" : "IRTrans Transmitter LAN",
             "id" : "irtrans_lan",
             "documentation" : "http://www.irtrans.de/en/",
-            "type" : "irtrans_lan.device"
+            "type" : "irtrans.irtrans_lan"
         }, {
             "name" : "IR WebSocket server Transmitter",
             "id" : "irwsserver",
             "documentation" : "http://github/",
-            "type" : "irwsserver.device"
+            "type" : "irtrans.irwsserver"
         }
     ],
     "configuration" : [],
@@ -168,9 +168,9 @@
         }
     },
     "device_types" : {
-        "irtrans_lan.device" : {
+        "irtrans.irtrans_lan" : {
             "description" : "IRTrans lan device",
-            "id" : "irtrans_lan.device",
+            "id" : "irtrans.irtrans_lan",
             "name" : "IRTrans Transmitter",
             "commands" : ["send_bintimings", "send_raw", "send_hexa"],
             "sensors" : ["code_ir","ack_ir_cmd"],
@@ -202,9 +202,9 @@
                 }
             ]
         },
-        "irwsserver.device" : {
+        "irtrans.irwsserver" : {
             "description" : "IR WebSocket server device",
-            "id" : "irwsserver.device",
+            "id" : "irtrans.irwsserver",
             "name" : "IR WS Server Transmitter",
             "commands" : ["send_bintimings", "send_raw", "send_hexa"],
             "sensors" : ["code_ir","ack_ir_cmd"],
@@ -251,12 +251,12 @@
                 }, {
                     "key" : "ir_tolerance",
 					"xpl": false,
-                    "description" : "Tolerence in us for pulse/pause pairs for decoded infrared code (default : 150 us)",
+                    "description" : "Tolerance in us for pulse/pause pairs for decoded infrared code (default : 150 us)",
                     "type" : "integer"
                 }, {
                     "key" : "ir_large_tolerance",
 					"xpl": false,
-                    "description" : "Large tolerence in us for decoded infrared code, according to ir_max_out (default : 300 us)",
+                    "description" : "Large tolerance in us for decoded infrared code, according to ir_max_out (default : 300 us)",
                     "type" : "integer"
                 }, {
                     "key" : "ir_max_out",

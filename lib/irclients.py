@@ -68,14 +68,14 @@ def getIRTransId(device):
     
 def checkIfConfigured(deviceType,  device):
     print device
-    if deviceType == 'irtrans_lan.device' :
+    if deviceType == 'irtrans.irtrans_lan' :
         if device["name"] and \
            device["parameters"]["ir_coder"]["value"] and \
            device["parameters"]["server_path"]["value"] and \
            device["parameters"]["ip_server"]["value"] and \
            device["parameters"]["irtrans_ip"]["value"]: return True
         else : return False
-    elif deviceType == 'irwsserver.device' :
+    elif deviceType == 'irtrans.irwsserver' :
         if device["name"] and \
            device["parameters"]["ir_coder"]["value"] and \
            device["parameters"]["ip_server"]["value"] and \

@@ -2,22 +2,13 @@
 #-*- coding: utf-8 -*-
 
 ### configuration ######################################
-REST_URL="http://192.168.1.195:40405"
-HOST="vmdomogik0"
-DEVICE_NAME="Daikin remote 1"
-# path in the filesystem for the device 
-DEVICE_ADDRESS="/home"      
-# interval in minutes between each poll
-DEVICE_INTERVAL=1
+plugin ='irtrans'
+json_file = "/home/admdomo/Partage-VM/domogik-plugin-{0}/info.json".format(plugin)
 ########################################################
-
 
 import json
 import sys
 from domogik.common.packagejson import PackageJson
-
-#json_file = "d:\Python_prog\domogik-plugin-daikcode\info.json"
-json_file = "/home/admdomo/Partage-VM/domogik-plugin-irtrans/info.json"
 
 data = json.load(open(json_file))
 print data

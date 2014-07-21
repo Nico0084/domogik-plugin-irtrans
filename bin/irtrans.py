@@ -75,7 +75,7 @@ class IRTransManager(XplPlugin):
         self.managerClients = ManagerClients(self,  self.send_xplTrig)
         for a_device in self.devices :
             try :
-                if (a_device['device_type_id'] != 'irtrans_lan.device') and (a_device['device_type_id'] != 'irwsserver.device') :
+                if (a_device['device_type_id'] != 'irtrans.irtrans_lan') and (a_device['device_type_id'] != 'irtrans.irwsserver') :
                     self.log.error(u"No a device type reconized : {0}".format(a_device['device_type_id']))
                     break
                 else :

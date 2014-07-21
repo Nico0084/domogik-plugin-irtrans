@@ -74,9 +74,9 @@ class ManagerClients :
             return False
         else:
             if checkIfConfigured(device["device_type_id"],  device ) :
-                if device["device_type_id"] == "irtrans_lan.device" :
+                if device["device_type_id"] == "irtrans.irtrans_lan" :
                     self.irTransClients[name] = IRTransClient(self,  device,  self._xplPlugin.log)
-                elif  device["device_type_id"] == "irwsserver.device" :
+                elif  device["device_type_id"] == "irtrans.irwsserver" :
                     self.irTransClients[name] = IRWSClient(self,  device,  self._xplPlugin.log)
                 else :
                     self._xplPlugin.log.error(u"IRtransceiver Clients Manager : IRtransceiver type {0} not exist, not added.".format(name))

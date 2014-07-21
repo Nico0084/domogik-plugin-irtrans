@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     # create a test device
     try:
-        device_id = td.create_device(client_id, "test_IRTrans_Lan", "irtrans_lan.device")
+        device_id = td.create_device(client_id, "test_IRTrans_Lan", "irtrans.irtrans_lan")
         params = {"device" : DEVICE_NAME, "server_path" : DEVICE_PATH, "ip_server": DEVICE_IP_SERVER, "irtrans_ip": DEVICE_IP_IRTRANS}
         print (u"configure_global_parameters : {0}".format(params))
         td.configure_global_parameters(params)

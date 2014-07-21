@@ -4,8 +4,6 @@
 ### configuration ######################################
 ENCODER = "DAIKIN"
 
-REST_URL="http://192.168.1.195:40405"
-HOST="vmdomogik0"
 DEVICE_NAME="IRTrans_1"
 DEVICE_PATH = "/usr/local/irtrans"
 DEVICE_IP_SERVER = "localhost"
@@ -22,31 +20,58 @@ DEVICE2_KEY =""
 from domogik.tests.common.testdevice import TestDevice
 from domogik.common.utils import get_sanitized_hostname
 
+plugin =  "irtrans"
+
 def create_device():
     ### create the device, and if ok, get its id in device_id
+    client_id  = "plugin-{0}.{1}".format(plugin, get_sanitized_hostname())
     print("Creating the irtrans device...")
     td = TestDevice()
-    print 'host :',  get_sanitized_hostname()
-    device_id = td.create_device("plugin-irtrans.{0}".format(get_sanitized_hostname()), "test_IRTrans_Lan", "irtrans_lan.device")
-    print "Device irtrans created"
-    td.configure_global_parameters({"device" : DEVICE_NAME, "ir_coder" : ENCODER, "server_path" : DEVICE_PATH, "ip_server": DEVICE_IP_SERVER, "irtrans_ip": DEVICE_IP_IRTRANS})
-    print "Device irtrans configured" 
+    params = td.get_params(client_id, "irtrans.irtrans_lan")
+        # fill in the params
+    params["device_type"] = "irtrans.irtrans_lan"
+    params["name"] = "test_IRTrans_LAN"
+    params["reference"] = "IRTrans Lan client"
+    params["description"] = "Handle IRTrans modul"
+    for idx, val in enumerate(params['no-xpl']):
+        if params['no-xpl'][idx]['key'] == 'ir_coder' :  params['no-xpl'][idx]['value'] = ENCODER
+        if params['no-xpl'][idx]['key'] == 'server_path' :  params['no-xpl'][idx]['value'] = DEVICE_PATH
+        if params['no-xpl'][idx]['key'] == 'ip_server' :  params['no-xpl'][idx]['value'] = DEVICE_IP_SERVER
+        if params['no-xpl'][idx]['key'] == 'irtrans_ip' :  params['no-xpl'][idx]['value'] = DEVICE_IP_IRTRANS
 
+    for idx, val in enumerate(params['xpl']):
+        params['xpl'][idx]['value'] = DEVICE_NAME
+
+    # go and create
+    td.create_device(params)
+    print "Device IRTrans Lan {0} configured".format(DEVICE_NAME) 
+    
     print("Creating the irwsserver device...")
-    td2 = TestDevice()
-    print 'host :',  get_sanitized_hostname()
-    device_id = td2.create_device("plugin-irtrans.{0}".format(get_sanitized_hostname()), "test_IRTrans_WS", "irwsserver.device")
-    print "Device irwsserver created"
-    td2.configure_global_parameters({"device" : DEVICE2_NAME, "ir_coder" : ENCODER, "ip_server": DEVICE2_IP_SERVER, "port_server" : DEVICE2_PORT_SERVER,
-                                                  "ssl_activate": DEVICE2_SSL, "ssl_certificate": DEVICE2_CERTIFICATE,  "ssl_key": DEVICE2_KEY, 
-                                                  "ir_repeat": 3, "ir_tolerance": 150,  "ir_large_tolerance": 300,  "ir_max_out": 10})
-    print "Device irwsserver configured" 
+    td = TestDevice()
+    params = td.get_params(client_id, "irtrans.irwsserver")
+        # fill in the params
+    params["device_type"] = "irtrans.irwsserver"
+    params["name"] = "test_IRTrans_WS"
+    params["reference"] = "IR WebSockect client"
+    params["description"] = "Handle IR WebSockect modul"
+    for idx, val in enumerate(params['no-xpl']):
+        if params['no-xpl'][idx]['key'] == 'ir_coder' :  params['no-xpl'][idx]['value'] = ENCODER
+        elif params['no-xpl'][idx]['key'] == 'ip_server' :  params['no-xpl'][idx]['value'] = DEVICE2_IP_SERVER
+        elif params['no-xpl'][idx]['key'] == 'port_server' :  params['no-xpl'][idx]['value'] = DEVICE2_PORT_SERVER
+        elif params['no-xpl'][idx]['key'] == 'ssl_activate' :  params['no-xpl'][idx]['value'] = DEVICE2_SSL
+        elif params['no-xpl'][idx]['key'] == 'ssl_certificate' :  params['no-xpl'][idx]['value'] = DEVICE2_CERTIFICATE
+        elif params['no-xpl'][idx]['key'] == 'ssl_key' :  params['no-xpl'][idx]['value'] = DEVICE2_KEY
+        elif params['no-xpl'][idx]['key'] == 'ir_repeat' :  params['no-xpl'][idx]['value'] = 3
+        elif params['no-xpl'][idx]['key'] == 'ir_tolerance' :  params['no-xpl'][idx]['value'] = 150
+        elif params['no-xpl'][idx]['key'] == 'ir_large_tolerance' :  params['no-xpl'][idx]['value'] = 300
+        elif params['no-xpl'][idx]['key'] == 'ir_max_out' :  params['no-xpl'][idx]['value'] = 10
+
+    for idx, val in enumerate(params['xpl']):
+        params['xpl'][idx]['value'] = DEVICE2_NAME
+
+    # go and create
+    td.create_device(params)
+    print "Device irwsserver {0} configured".format(DEVICE2_NAME) 
     
 if __name__ == "__main__":
     create_device()
-
-
-# TODO : recup de la config rest
-# TODO : passer les parametres a la fonction
-# TODO : renommer le fichier pour pouvoir importer la fonction en lib
-# TODO : create generic functions for device creation and global parameters
