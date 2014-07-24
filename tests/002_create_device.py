@@ -33,11 +33,11 @@ def create_device():
     params["name"] = "test_IRTrans_LAN"
     params["reference"] = "IRTrans Lan client"
     params["description"] = "Handle IRTrans modul"
-    for idx, val in enumerate(params['no-xpl']):
-        if params['no-xpl'][idx]['key'] == 'ir_coder' :  params['no-xpl'][idx]['value'] = ENCODER
-        if params['no-xpl'][idx]['key'] == 'server_path' :  params['no-xpl'][idx]['value'] = DEVICE_PATH
-        if params['no-xpl'][idx]['key'] == 'ip_server' :  params['no-xpl'][idx]['value'] = DEVICE_IP_SERVER
-        if params['no-xpl'][idx]['key'] == 'irtrans_ip' :  params['no-xpl'][idx]['value'] = DEVICE_IP_IRTRANS
+    for idx, val in enumerate(params['global']):
+        if params['global'][idx]['key'] == 'ir_coder' :  params['global'][idx]['value'] = ENCODER
+        if params['global'][idx]['key'] == 'server_path' :  params['global'][idx]['value'] = DEVICE_PATH
+        if params['global'][idx]['key'] == 'ip_server' :  params['global'][idx]['value'] = DEVICE_IP_SERVER
+        if params['global'][idx]['key'] == 'irtrans_ip' :  params['global'][idx]['value'] = DEVICE_IP_IRTRANS
 
     for idx, val in enumerate(params['xpl']):
         params['xpl'][idx]['value'] = DEVICE_NAME
@@ -54,17 +54,17 @@ def create_device():
     params["name"] = "test_IRTrans_WS"
     params["reference"] = "IR WebSockect client"
     params["description"] = "Handle IR WebSockect modul"
-    for idx, val in enumerate(params['no-xpl']):
-        if params['no-xpl'][idx]['key'] == 'ir_coder' :  params['no-xpl'][idx]['value'] = ENCODER
-        elif params['no-xpl'][idx]['key'] == 'ip_server' :  params['no-xpl'][idx]['value'] = DEVICE2_IP_SERVER
-        elif params['no-xpl'][idx]['key'] == 'port_server' :  params['no-xpl'][idx]['value'] = DEVICE2_PORT_SERVER
-        elif params['no-xpl'][idx]['key'] == 'ssl_activate' :  params['no-xpl'][idx]['value'] = DEVICE2_SSL
-        elif params['no-xpl'][idx]['key'] == 'ssl_certificate' :  params['no-xpl'][idx]['value'] = DEVICE2_CERTIFICATE
-        elif params['no-xpl'][idx]['key'] == 'ssl_key' :  params['no-xpl'][idx]['value'] = DEVICE2_KEY
-        elif params['no-xpl'][idx]['key'] == 'ir_repeat' :  params['no-xpl'][idx]['value'] = 3
-        elif params['no-xpl'][idx]['key'] == 'ir_tolerance' :  params['no-xpl'][idx]['value'] = 150
-        elif params['no-xpl'][idx]['key'] == 'ir_large_tolerance' :  params['no-xpl'][idx]['value'] = 300
-        elif params['no-xpl'][idx]['key'] == 'ir_max_out' :  params['no-xpl'][idx]['value'] = 10
+    for idx, val in enumerate(params['global']):
+        if params['global'][idx]['key'] == 'ir_coder' :  params['global'][idx]['value'] = ENCODER
+        elif params['global'][idx]['key'] == 'ip_server' :  params['global'][idx]['value'] = DEVICE2_IP_SERVER
+        elif params['global'][idx]['key'] == 'port_server' :  params['global'][idx]['value'] = DEVICE2_PORT_SERVER
+        elif params['global'][idx]['key'] == 'ssl_activate' :  params['global'][idx]['value'] = DEVICE2_SSL
+        elif params['global'][idx]['key'] == 'ssl_certificate' :  params['global'][idx]['value'] = DEVICE2_CERTIFICATE
+        elif params['global'][idx]['key'] == 'ssl_key' :  params['global'][idx]['value'] = DEVICE2_KEY
+        elif params['global'][idx]['key'] == 'ir_repeat' :  params['global'][idx]['value'] = 3
+        elif params['global'][idx]['key'] == 'ir_tolerance' :  params['global'][idx]['value'] = 150
+        elif params['global'][idx]['key'] == 'ir_large_tolerance' :  params['global'][idx]['value'] = 300
+        elif params['global'][idx]['key'] == 'ir_max_out' :  params['global'][idx]['value'] = 10
 
     for idx, val in enumerate(params['xpl']):
         params['xpl'][idx]['value'] = DEVICE2_NAME
