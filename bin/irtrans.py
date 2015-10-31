@@ -39,12 +39,9 @@ try:
     from domogik.xpl.common.xplconnector import Listener
     from domogik.xpl.common.xplmessage import XplMessage
     from domogik.xpl.common.plugin import XplPlugin
-    from domogik.mq.reqrep.client import MQSyncReq
-    from domogik.mq.message import MQMessage
 
-    from domogik_packages.plugin_irtrans.lib.irtrans import IRTransServer,  getIRTransId,  ManagerClients
+    from domogik_packages.plugin_irtrans.lib.irtrans import getIRTransId,  ManagerClients
     
-    import threading
     import traceback
 except ImportError as exc :
     import logging
@@ -113,9 +110,8 @@ class IRTransManager(XplPlugin):
         msg.add_data(data)
         self.myxpl.send(msg)
         
-    def handle_xpl_trig(self, massage):
+    def handle_xpl_trig(self, message):
         self.log.debug("xpl-trig listener received message:{0}".format(message))
-        print message
     
     def handle_xpl_cmd(self,  message):
         """ Process xpl schema irtrans.basic
