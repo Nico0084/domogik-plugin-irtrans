@@ -1,13 +1,10 @@
 # !/usr/bin/python
 #-*- coding: utf-8 -*-
-import os
 import commands
-import pprint
-from zmq.eventloop.ioloop import IOLoop
-from domogik.mq.reqrep.client import MQSyncReq
-from domogik.mq.message import MQMessage
+from domogikmq.reqrep.client import MQSyncReq
+from domogikmq.message import MQMessage
 from domogik.common.utils import get_sanitized_hostname
-from domogik_packages.plugin_irtrans.lib.irclients import getIRTransId, DataTypes,  checkIfConfigured,  IRTransClient,  IRWSClient
+from domogik_packages.plugin_irtrans.lib.irclients import getIRTransId, checkIfConfigured, IRTransClient, IRWSClient
 
 
 #  *********** Prérequis *********************
