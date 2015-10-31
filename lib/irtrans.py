@@ -1,6 +1,7 @@
 # !/usr/bin/python
 #-*- coding: utf-8 -*-
 import commands
+import zmq
 from domogikmq.reqrep.client import MQSyncReq
 from domogikmq.message import MQMessage
 from domogik.common.utils import get_sanitized_hostname
