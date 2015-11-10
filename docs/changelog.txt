@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1b1
+====
+
+* Update Icon, publish beta 1
+
 0.1a
 ====
 
