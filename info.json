@@ -278,7 +278,7 @@
         "domogik_min_version" : "0.4.0",
         "name" : "irtrans",
          "type" : "plugin",
-        "version" : "0.1a0"
+        "version" : "0.1b1"
     },
     "json_version" : 2
 }
