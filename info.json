@@ -12,6 +12,8 @@
         }
     ],
     "configuration" : [],
+    "xpl_commands" : {},
+    "xpl_stats" : {},
     "commands" : {
         "send_bintimings" : {
             "name" : "Send standard code",
@@ -25,8 +27,7 @@
                     "data_type" : "DT_String",
                     "conversion" : ""
                 }
-            ],
-            "xpl_command" : "send_bintimings_code"
+            ]
         },
         "send_raw" : {
             "name" : "Send raw code",
@@ -36,8 +37,7 @@
                     "data_type" : "DT_String",
                     "conversion" : ""
                 }
-            ],
-            "xpl_command" : "send_raw_code"
+            ]
         },
         "send_hexa" : {
             "name" : "Send hexa code",
@@ -47,58 +47,7 @@
                     "data_type" : "DT_String",
                     "conversion" : ""
                 }
-            ],
-            "xpl_command" : "send_hexa_code"
-        }
-    },
-    "xpl_commands" : {
-        "send_bintimings_code" : {
-            "name" : "send standard code",
-            "schema" : "irtrans.basic",
-            "xplstat_name" : "ack_send",
-            "parameters" : {
-                "static" : [{
-                        "key" : "command",
-                        "value" : "send"
-                    },{
-                        "key" : "datatype",
-                        "value" : "BinTimings"
-                    }
-                ],
-                "device" : []
-            }
-        },
-        "send_raw_code" : {
-            "name" : "send raw code",
-            "schema" : "irtrans.basic",
-            "xplstat_name" : "ack_send",
-            "parameters" : {
-                "static" : [{
-                        "key" : "command",
-                        "value" : "send"
-                    },{
-                        "key" : "datatype",
-                        "value" : "RAW"
-                    }
-                ],
-                "device" : []
-            }
-        },
-        "send_hexa_code" : {
-            "name" : "send hexa code",
-            "schema" : "irtrans.basic",
-            "xplstat_name" : "ack_send",
-            "parameters" : {
-                "static" : [{
-                        "key" : "command",
-                        "value" : "send"
-                    },{
-                        "key" : "datatype",
-                        "value" : "HEX"
-                    }
-                ],
-                "device" : []
-            }
+            ]
         }
     },
     "sensors" : {
@@ -129,44 +78,20 @@
                     "expire": 0,
                     "round_value": 0
                 }
-        }
-    },
-    "xpl_stats" : {
-        "receive_code_ir" : {
-            "name" : "receive_code_ir",
-            "schema" : "ir.basic",
-            "parameters" : {
-                "static" : [{
-                        "key" : "type",
-                        "value" : "code_ir"
-                    }
-				],
-                "device" : [],
-                "dynamic" : [{
-                        "key" : "code",
-                        "ignore_values" : "",
-                        "sensor" : "code_ir"
-                    }
-                ]
-            }
         },
-         "ack_send" : {
-            "name" : "sended command acknowledge",
-            "schema" : "ir.basic",
-            "parameters" : {
-                "static" : [{
-                        "key" : "type",
-                        "value" : "ack_ir_cmd"
-                    }
-				],
-                "device" : [],
-                "dynamic" : [{
-                        "key" : "result",
-                        "ignore_values" : "",
-                        "sensor" : "ack_ir_cmd"
-                    }
-                ]
-            }
+        "power" : {
+            "name" : "status of power device",
+            "incremental": false,
+            "data_type" : "DT_Switch",
+            "conversion" : "",
+            "timeout": 0,
+            "history": {
+                    "store": false,
+                    "duplicate": false,
+                    "max": 0,
+                    "expire": 0,
+                    "round_value": 0
+                }
         }
     },
     "device_types" : {
@@ -175,13 +100,8 @@
             "id" : "irtrans.irtrans_lan",
             "name" : "IRTrans Transmitter",
             "commands" : ["send_bintimings", "send_raw", "send_hexa"],
-            "sensors" : ["code_ir","ack_ir_cmd"],
+            "sensors" : ["code_ir","ack_ir_cmd","power"],
             "parameters" : [{
-                    "key" : "device",
-					"xpl": true,
-                    "description" : "IRTrans unit identification",
-                    "type" : "string"
-                }, {
                     "key" : "ir_coder",
 					"xpl": false,
                     "description" : "IR Encoder type name (DAIKIN, RC5,..) ",
@@ -209,13 +129,8 @@
             "id" : "irtrans.irwsserver",
             "name" : "IR WS Server Transmitter",
             "commands" : ["send_bintimings", "send_raw", "send_hexa"],
-            "sensors" : ["code_ir","ack_ir_cmd"],
+            "sensors" : ["code_ir","ack_ir_cmd","power"],
             "parameters" : [{
-                    "key" : "device",
-					"xpl": true,
-                    "description" : "IR transceiver unit identification",
-                    "type" : "string"
-                }, {
                     "key" : "ir_coder",
 					"xpl": false,
                     "description" : "IR Encode type name (DAIKIN, RC5)",
@@ -274,11 +189,11 @@
         "author_email" : "nico84dev at gmail.com",
         "tags" : ["IR Transmitter"],
         "dependencies" : [],
-        "description" : "Send/receive IR code from xPL to IRTrans transmitter modul",
-        "domogik_min_version" : "0.4.0",
+        "description" : "Send/receive IR code from to IRTrans transmitter modul",
+        "domogik_min_version" : "0.5.0",
         "name" : "irtrans",
          "type" : "plugin",
-        "version" : "0.1b1"
+        "version" : "0.2"
     },
     "json_version" : 2
 }
